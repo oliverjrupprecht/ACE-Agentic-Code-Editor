@@ -3,12 +3,10 @@ from os.path import (
         getsize,
         abspath,
         join,
-        isfile,
         isdir,
         normpath
         )
 
-# directory variable shoudld be a relative path to the working directory
 def get_files_info(working_directory, directory="."):
     full_path = normpath(join(
                 abspath(working_directory), 
