@@ -1,6 +1,5 @@
 import subprocess
 from os.path import (
-        basename,
         abspath,
         join,
         isfile,
@@ -16,19 +15,21 @@ def run_python_file(working_directory, file_path, args=[]):
                 file_path
                 ))
 
+    print(full_path)
 
     if not full_path.startswith(abs_working_path):
-        return f'Error: Cannot execute "{file_path}" as it is outside the permitted working directory'
+        return f'Error: Cannot read "{full_path}" as it is outside the permitted working directory'
+
+    print(exists(full_path))
 
     if not exists(full_path):
-        return f'Error: File "{file_path}" not found'
+        return f'Error: File "{full_path}" not found'
 
     if not full_path.endswith(".py"):
-        return f'Error: "{file_path}" is not a Python file.'
+        return f'Error: "{full_path}" is not a python file'
 
-    call = ["python3",full_path] + args
     try:
-        p = subprocess.run(call, cwd=working_directory, timeout=30, capture_output=True)
+        p = subprocess.run("python3", full_path, args, timeout=30, capture_output=True)
 
         out = f"STDOUT:{p.stdout}\nSTDERR:{p.stderr}"
         
