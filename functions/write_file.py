@@ -7,6 +7,8 @@ from os.path import (
         dirname
         )
 
+from google.genai import types
+
 def write_file(working_directory, file_path, content):
     abs_working_path = abspath(working_directory) 
     full_path = normpath(join(
@@ -26,4 +28,19 @@ def write_file(working_directory, file_path, content):
             return f'Successfully wrote to "{full_path}" ({len(content)} characters written)'
     except Exception as e:
         return f"Error: {e}"
+
+schema_write_file = types.FunctionDeclaration(
+    name="write_file",
+    description="Writes to a file, constrained within the working directory.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="The relative path to the root of the project ('.')",
+            ),
+        },
+    ),
+)
+
 

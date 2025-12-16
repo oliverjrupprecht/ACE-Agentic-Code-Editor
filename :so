@@ -1,0 +1,262 @@
+v = vim -- Global alias
+
+-- ============================================================================
+-- 1. BASIC SETTINGS
+-- ============================================================================
+-- Theme & Transparency
+-- Note: Ensure you have 'habamax' or this will error. It is built-in on Nvim 0.10+
+pcall(v.cmd.colorscheme, "habamax") 
+v.api.nvim_set_hl(0, "Normal", { bg = "none" })
+v.api.nvim_set_hl(0, "NormalNC", { bg = "none" })
+v.api.nvim_set_hl(0, "EndOfBuffer", { bg = "none" })
+
+-- General Options
+v.keymap.set({ "n", "v" }, "d", '"_d') -- Don't copy when deleting
+v.opt.number = true
+v.opt.relativenumber = true
+v.opt.cursorline = true
+v.opt.wrap = false
+v.opt.scrolloff = 10
+v.opt.sidescrolloff = 8
+
+-- Indentation
+v.opt.tabstop = 2
+v.opt.shiftwidth = 2
+v.opt.softtabstop = 2
+v.opt.expandtab = true
+v.opt.smartindent = true
+v.opt.autoindent = true
+
+-- Search
+v.opt.ignorecase = true
+v.opt.smartcase = true
+v.opt.hlsearch = false
+v.opt.incsearch = true
+
+-- Visuals
+v.opt.termguicolors = true
+v.opt.signcolumn = "yes"
+v.opt.completeopt = "menuone,noinsert,noselect"
+
+-- File Handling
+v.opt.backup = false
+v.opt.writebackup = false
+v.opt.swapfile = false
+v.opt.undofile = true
+v.opt.undodir = v.fn.expand("~/.vim/undodir")
+v.opt.updatetime = 300
+v.opt.timeoutlen = 500
+
+-- Behavior
+v.opt.hidden = true
+v.opt.errorbells = false
+v.opt.autochdir = false
+v.opt.path:append("**")
+v.opt.clipboard:append("unnamedplus")
+v.opt.mouse = "a"
+
+-- Key Mappings
+v.g.mapleader = " "
+v.keymap.set("n", "<leader>cf", ":e ~/.config/nvim/init.lua<CR>")
+v.keymap.set("n", "<leader>q", ":q!<CR>")
+v.keymap.set("n", "<leader>wr", ":w<CR>")
+
+-- Centering Jumps
+v.keymap.set("n", "n", "nzzzv")
+v.keymap.set("n", "N", "Nzzzv")
+v.keymap.set("n", "<C-d>", "<C-d>zz")
+v.keymap.set("n", "<C-u>", "<C-u>zz")
+
+-- Windows & Buffers
+v.keymap.set("n", "<leader>bn", ":bnext<CR>")
+v.keymap.set("n", "<leader>bp", ":bprevious<CR>")
+v.keymap.set("n", "<leader>wl", "<C-w>h")
+v.keymap.set("n", "<leader>wr", "<C-w>l")
+v.keymap.set("n", "<leader>sp", ":vsplit<CR>")
+v.keymap.set("n", "<C-Left>", ":vertical resize -2<CR>")
+v.keymap.set("n", "<C-Right>", ":vertical resize +2<CR>")
+v.keymap.set("v", "<", "<gv")
+v.keymap.set("v", ">", ">gv")
+
+-- Netrw (File Explorer)
+v.keymap.set("n", "<leader>e", ":Lexplore<CR>")
+v.g.netrw_winsize = 18
+v.g.netrw_banner = 0
+v.g.netrw_liststyle = 3
+v.g.netrw_browse_split = 4
+v.g.netrw_hide = 1
+
+-- Bracketing
+v.keymap.set("i", "(", "()<Left>")
+v.keymap.set("i", "[", "[]<Left>")
+v.keymap.set("i", "{", "{}<Left>")
+v.keymap.set("i", "'", "''<Left>")
+v.keymap.set("i", '"', '""<Left>')
+
+-- ============================================================================
+-- 2. AUTOCOMMANDS & FUNCTIONS
+-- ============================================================================
+
+-- Highlight on Yank
+v.api.nvim_create_autocmd("TextYankPost", {
+  callback = function() v.highlight.on_yank() end,
+})
+
+-- Return to last edit position
+v.api.nvim_create_autocmd("BufReadPost", {
+  callback = function()
+    local mark = v.api.nvim_buf_get_mark(0, '"')
+    local lcount = v.api.nvim_buf_line_count(0)
+    if mark[1] > 0 and mark[1] <= lcount then
+      pcall(v.api.nvim_win_set_cursor, 0, mark)
+    end
+  end,
+})
+
+-- Auto-create directories on save
+v.api.nvim_create_autocmd("BufWritePre", {
+  callback = function()
+    local dir = v.fn.expand("<afile>:p:h")
+    if v.fn.isdirectory(dir) == 0 then
+      v.fn.mkdir(dir, "p")
+    end
+  end,
+})
+
+-- Filetype specific Indentation
+v.api.nvim_create_autocmd("FileType", {
+  pattern = { "lua", "python" },
+  callback = function()
+    v.opt_local.tabstop = 4
+    v.opt_local.shiftwidth = 4
+  end,
+})
+
+-- Status Line Function
+-- Made global so v:lua can find it
+function _G.StatusLineModified()
+  if v.bo.readonly then return " [RO]" end
+  if v.bo.modified then return " [+]" end
+  return ""
+end
+
+-- ============================================================================
+-- 3. UI (TABS & STATUSLINE)
+-- ============================================================================
+
+-- Custom Tabline
+function _G.MyTabLine()
+  local line = ""
+  for index, tab_id in ipairs(vim.api.nvim_list_tabpages()) do
+    local win_id = vim.api.nvim_tabpage_get_win(tab_id)
+    local buf_id = vim.api.nvim_win_get_buf(win_id)
+    local buf_name = vim.api.nvim_buf_get_name(buf_id)
+    
+    local name = (buf_name == "") and "[No Name]" or vim.fn.fnamemodify(buf_name, ":t")
+    local is_active = (tab_id == vim.api.nvim_get_current_tabpage())
+
+    line = line .. (is_active and "%#TabLineSel#" or "%#TabLine#")
+    line = line .. "%" .. index .. "T" .. " " .. index .. " " .. name .. " " .. "%#TabLine#│"
+  end
+  return line .. "%#TabLineFill#"
+end
+
+v.opt.showtabline = 1
+v.opt.tabline = "%!v:lua.MyTabLine()"
+
+-- Colors for UI
+v.cmd([[
+  hi TabLineSel guifg=#ffffff ctermfg=White guibg=NONE gui=bold
+  hi TabLine    guifg=#888888 ctermfg=Gray  guibg=NONE
+  hi TabLineFill guibg=NONE
+  hi StatusLine   guifg=#ffffff ctermfg=White guibg=NONE
+  hi StatusLineNC guifg=#888888 ctermfg=Gray  guibg=NONE
+]])
+
+v.opt.statusline = " %F %{v:lua.StatusLineModified()}"
+
+-- Tab Keys
+v.keymap.set("n", "<leader>tn", ":tabnew<CR>")
+v.keymap.set("n", "<leader>tx", ":tabclose<CR>")
+v.keymap.set("n", "<C-t>", ":tabnext<CR>")
+v.keymap.set("n", "<leader>tl", ":tabprevious<CR>")
+
+-- ============================================================================
+-- 4. LSP & COMPLETION (FIXED SECTION)
+-- ============================================================================
+
+-- Load the plugins
+local lspconfig = require('lspconfig')
+local blink = require('blink.cmp')
+
+-- 1. Get capabilities from Blink
+local capabilities = blink.get_lsp_capabilities()
+
+-- 2. Setup Servers (This replaces your broken v.lsp.config section)
+
+-- Haskell
+lspconfig.hls.setup({
+  cmd = { "haskell-language-server-wrapper", "--lsp" },
+  capabilities = capabilities,
+})
+
+-- Lua
+lspconfig.lua_ls.setup({
+  cmd = { "lua-language-server" },
+  capabilities = capabilities,
+})
+
+-- Python
+lspconfig.pyright.setup({
+  cmd = { "pyright-langserver", "--stdio" },
+  capabilities = capabilities,
+})
+
+-- 3. LSP Keybindings
+v.api.nvim_create_autocmd("LspAttach", {
+  callback = function(args)
+    local opts = { buffer = args.buf }
+    v.keymap.set("n", "<leader>gd", v.lsp.buf.definition, opts)
+    v.keymap.set("n", "<leader>gD", v.lsp.buf.declaration, opts)
+    v.keymap.set("n", "<leader>K", v.lsp.buf.hover, opts)
+    v.keymap.set("n", "<leader>rn", v.lsp.buf.rename, opts)
+    v.keymap.set("n", "<leader>ca", v.lsp.buf.code_action, opts)
+    v.keymap.set("n", "<leader>fm", function() v.lsp.buf.format({ async = true }) end, opts)
+  end,
+})
+
+-- 4. Setup Blink (Completion)
+blink.setup({
+  keymap = { preset = 'default' },
+
+  appearance = {
+    use_nvim_cmp_as_default = true,
+    nerd_font_variant = 'mono',
+  },
+
+  -- Enable command line completion
+  cmdline = { enabled = true },
+
+  sources = {
+    default = { 'lsp', 'path', 'snippets', 'buffer' },
+  },
+
+  signature = { enabled = true },
+
+  completion = {
+    -- 1. Enable Ghost Text
+    ghost_text = { enabled = true },
+    
+    -- 2. Instant Documentation
+    documentation = {
+      auto_show = true,
+      auto_show_delay_ms = 0,
+      window = { border = 'rounded' }
+    },
+
+    -- 3. Rounded borders for the menu
+    menu = {
+      border = 'rounded'
+    }
+  }
+})

@@ -6,6 +6,7 @@ from os.path import (
         isdir,
         normpath
         )
+from google.genai import types
 
 def get_files_info(working_directory, directory="."):
     full_path = normpath(join(
@@ -13,7 +14,10 @@ def get_files_info(working_directory, directory="."):
                 directory
                 ))
 
-    header_string = f"Result for {("'" + directory + "'") if (directory != ".") else "current" } directory:\n"
+    def res_fmt(): 
+        return ("'" +  directory + "'") if (directory != ".") else "current" 
+
+    header_string = f"Result for {res_fmt()} directory:\n"
 
     if not full_path.startswith(abspath(working_directory)): 
         return f"{header_string}    Error: Cannot list {directory} as it is outside the permitted working directory"
@@ -32,4 +36,19 @@ def get_files_info(working_directory, directory="."):
         return f"{header_string}    Error: {e}"
 
     return f"{header_string}{"\n".join(metadata)}"
+
+schema_get_files_info = types.FunctionDeclaration(
+    name="get_files_info",
+    description="Lists files in the specified directory along with their sizes, constrained to the working directory.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "directory": types.Schema(
+                type=types.Type.STRING,
+                description="The directory variable is the relative path from \".\". Therefore to return files at the root, you should input \".\"",
+            ),
+        },
+    ),
+)
+
 
