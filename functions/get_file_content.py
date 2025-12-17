@@ -1,4 +1,5 @@
-from os import listdir
+from google.genai import types
+
 from os.path import (
         getsize,
         abspath,
@@ -7,9 +8,7 @@ from os.path import (
         normpath
         )
 
-from functions.config import MAX_CHARS
-from google.genai import types
-
+MAX_READ_CHARS = 10000
 
 def get_file_content(working_directory, file_path):
     full_path = normpath(join(
@@ -25,9 +24,9 @@ def get_file_content(working_directory, file_path):
 
     try:
         with open(full_path, "r") as f:
-            content = f.read(MAX_CHARS)
+            content = f.read(MAX_READ_CHARS)
 
-        if getsize(full_path) > MAX_CHARS:
+        if getsize(full_path) > MAX_READ_CHARS:
 
             return f"...{content}\n[File \"{full_path}\" truncated at 10000 characters]"
         else:
@@ -36,7 +35,7 @@ def get_file_content(working_directory, file_path):
         return f"Error: {e}"
 
 
-schema_get_file_content = types.FunctionDeclaration(
+schema = types.FunctionDeclaration(
     name="get_file_content",
     description="Returns the contents of a file, constrained to the working directory.",
     parameters=types.Schema(

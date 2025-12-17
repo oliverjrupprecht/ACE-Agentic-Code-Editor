@@ -1,14 +1,12 @@
 import subprocess
+from google.genai import types
+
 from os.path import (
-        basename,
         abspath,
         join,
-        isfile,
         normpath,
         exists
         )
-
-from google.genai import types
 
 def run_python_file(working_directory, file_path, args=[]):
     abs_working_path = abspath(working_directory)
@@ -46,7 +44,7 @@ def run_python_file(working_directory, file_path, args=[]):
 
 
 
-schema_run_python_file = types.FunctionDeclaration(
+schema = types.FunctionDeclaration(
     name="run_python_file",
     description="Runs python files, returning stdout and stderr, constrained to the working directory.",
     parameters=types.Schema(

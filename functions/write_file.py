@@ -1,4 +1,6 @@
 from os import makedirs
+from google.genai import types
+
 from os.path import (
         abspath,
         join,
@@ -6,8 +8,6 @@ from os.path import (
         exists,
         dirname
         )
-
-from google.genai import types
 
 def write_file(working_directory, file_path, content):
     abs_working_path = abspath(working_directory) 
@@ -29,7 +29,7 @@ def write_file(working_directory, file_path, content):
     except Exception as e:
         return f"Error: {e}"
 
-schema_write_file = types.FunctionDeclaration(
+schema = types.FunctionDeclaration(
     name="write_file",
     description="Writes to a file, constrained within the working directory.",
     parameters=types.Schema(
@@ -38,7 +38,12 @@ schema_write_file = types.FunctionDeclaration(
             "file_path": types.Schema(
                 type=types.Type.STRING,
                 description="The relative path to the root of the project ('.')",
-            ),
+                ),
+
+            "content" : types.Schema(
+                type=types.Type.STRING,
+                description="The content to write to the file"
+                )
         },
     ),
 )
