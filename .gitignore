@@ -9,7 +9,7 @@ pyrightconfig.json
 
 ^test
 uv.lock
-calculator
+testing
 
 # Virtual environments
 .venv

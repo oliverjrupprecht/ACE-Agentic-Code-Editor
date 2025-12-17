@@ -42,7 +42,7 @@ try:
     while iter_limit > 0:
 # call the api with the sys prompt, user prompt and available functions
         response = client.models.generate_content(
-            model='gemini-2.5-flash-lite', contents=messages,
+            model='gemini-2.5-flash', contents=messages,
             config=types.GenerateContentConfig(tools=[available_functions], system_instruction=system_prompt),
         )
 
@@ -82,7 +82,8 @@ try:
             User prompt: {args.user_prompt}
             Response tokens: {response.usage_metadata.candidates_token_count}
             Prompt tokens: {response.usage_metadata.prompt_token_count}
-            Response: {response.text} 
+            Response: 
+            {response.text} 
                   """)
 
         if response.text and not response.function_calls:
